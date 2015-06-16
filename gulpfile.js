@@ -373,7 +373,7 @@ function runKarma(configFile, done) {
 
 gulp.task('test.js', function(done) {
   runSequence('test.unit.tools/ci', 'test.transpiler.unittest', 'docs/test', 'test.unit.js/ci',
-              'test.unit.cjs/ci', sequenceComplete(done));
+              'test.unit.cjs/ci', 'test.typings', sequenceComplete(done));
 });
 
 gulp.task('test.dart', function(done) {
@@ -541,6 +541,21 @@ gulp.task('test.server.dart', runServerDartTests(gulp, gulpPlugins, {
 // test builders
 gulp.task('test.transpiler.unittest', function(done) {
   runJasmineTests(['tools/transpiler/unittest/**/*.js'], done);
+});
+
+// -----------------
+// TODO: Use a version of TypeScript that matches what is used by DefinitelyTyped.
+gulp.task('test.typings', [], function(done) {
+  var stream = gulp.src(['modules/angular2/test/typings_spec/*.ts', 'dist/docs/angular2.d.ts'])
+      .pipe(tsc({target: 'ES5', module: 'commonjs',
+                 // Don't use the version of typescript that gulp-typescript depends on, we need 1.5
+                 // see https://github.com/ivogabe/gulp-typescript#typescript-version
+                 typescript: require('typescript')}))
+      .on('error', function(error) {
+        // nodejs doesn't propagate errors from the src stream into the final stream so we are
+        // forwarding the error into the final stream
+        stream.emit('error', error);
+      });
 });
 
 // -----------------
